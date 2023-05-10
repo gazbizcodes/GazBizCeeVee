@@ -3,20 +3,23 @@ package com.example.gazbizceevee
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -26,6 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.gazbizceevee.network.APICeeVeeDeserializer
+import com.example.gazbizceevee.network.Experience
 import com.example.gazbizceevee.ui.Screen
 import com.example.gazbizceevee.ui.theme.GazBizCeeVeeTheme
 import com.example.gazbizceevee.utils.FileUtils
@@ -37,6 +41,7 @@ class MainActivity : ComponentActivity() {
 
     private val fileUtils = FileUtils()
     private val deserializer = APICeeVeeDeserializer()
+    private val ceeVee by lazy { deserializer.getCeeVee() }
 
     private val navigationItems = listOf(
         Screen.Home,
@@ -46,11 +51,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val navController = rememberNavController()
             Scaffold(
-                bottomBar = { CreateBottomNav(rememberNavController()) }
+                bottomBar = { CreateBottomNav(navController) }
             ) { innerPadding ->
                 NavHost(
-                    rememberNavController(),
+                    navController = navController,
                     startDestination = Screen.Home.route,
                     Modifier.padding(innerPadding)
                 ) {
@@ -59,8 +65,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        val cv = deserializer.getAPICeeVee()
-        cv
     }
 
     @Composable
@@ -91,6 +95,7 @@ class MainActivity : ComponentActivity() {
     fun Home() {
         val file = fileUtils.getFileFromAssets(this@MainActivity, "cv.pdf")
         file?.let {
+            //todo appears to be a bug with this when re-creating? Dig in and flag on gitHub
             val pdfState = rememberVerticalPdfReaderState(
                 resource = ResourceType.Local(file.toUri()),
                 isZoomEnable = true
@@ -113,7 +118,21 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun Experience() {
-        Text(text = "This will contain the experience section of the CV.")
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(30.dp),
+            modifier = Modifier.width(IntrinsicSize.Min)
+        ) {
+            items(ceeVee.experience) { experience ->
+                ExperienceRow(experience)
+            }
+        }
+    }
+
+    @Composable
+    private fun ExperienceRow(experience: Experience) {
+        ElevatedCard() {
+            Text(text = experience.companyName, fontSize = 30.sp)
+        }
     }
 
     @Composable
