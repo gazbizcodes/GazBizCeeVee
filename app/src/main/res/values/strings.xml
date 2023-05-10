@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">GazBizCeeVee</string>
+    <string name="title_home">Home</string>
+    <string name="title_experience">Experience</string>
+    <string name="home">home</string>
+    <string name="experience">experience</string>
 </resources>
