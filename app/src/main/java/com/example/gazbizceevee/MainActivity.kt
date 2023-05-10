@@ -1,10 +1,8 @@
 package com.example.gazbizceevee
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -12,16 +10,12 @@ import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -31,13 +25,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.gazbizceevee.network.APICeeVeeDeserializer
+import com.example.gazbizceevee.ui.Screen
 import com.example.gazbizceevee.ui.theme.GazBizCeeVeeTheme
+import com.example.gazbizceevee.utils.FileUtils
 import com.rizzi.bouquet.ResourceType
 import com.rizzi.bouquet.VerticalPDFReader
 import com.rizzi.bouquet.rememberVerticalPdfReaderState
-import java.io.File
 
 class MainActivity : ComponentActivity() {
+
+    private val fileUtils = FileUtils()
+    private val deserializer = APICeeVeeDeserializer()
 
     private val navigationItems = listOf(
         Screen.Home,
@@ -48,7 +47,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Scaffold(
-                bottomBar = { createBottomNav(rememberNavController()) }
+                bottomBar = { CreateBottomNav(rememberNavController()) }
             ) { innerPadding ->
                 NavHost(
                     rememberNavController(),
@@ -60,10 +59,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        val cv = deserializer.getAPICeeVee()
+        cv
     }
 
     @Composable
-    private fun createBottomNav(navController: NavHostController) {
+    private fun CreateBottomNav(navController: NavHostController) {
         BottomNavigation {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
@@ -88,24 +89,26 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun Home() {
-        val file = getFileFromAssets(this@MainActivity, "cv.pdf")
-        val pdfState = rememberVerticalPdfReaderState(
-            resource = ResourceType.Local(file.toUri()),
-            isZoomEnable = true
-        )
+        val file = fileUtils.getFileFromAssets(this@MainActivity, "cv.pdf")
+        file?.let {
+            val pdfState = rememberVerticalPdfReaderState(
+                resource = ResourceType.Local(file.toUri()),
+                isZoomEnable = true
+            )
 
-        GazBizCeeVeeTheme {
-            Surface(
-                color = MaterialTheme.colorScheme.background
-            ) {
-                VerticalPDFReader(
-                    state = pdfState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = MaterialTheme.colorScheme.background)
-                )
+            GazBizCeeVeeTheme {
+                Surface(
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    VerticalPDFReader(
+                        state = pdfState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = MaterialTheme.colorScheme.background)
+                    )
+                }
             }
-        }
+        } ?: ErrorScreen("File not found")
     }
 
     @Composable
@@ -113,23 +116,8 @@ class MainActivity : ComponentActivity() {
         Text(text = "This will contain the experience section of the CV.")
     }
 
-    private fun getFileFromAssets(context: Context, fileName: String): File =
-        File(context.cacheDir, fileName)
-            .also {
-                if (!it.exists()) {
-                    it.outputStream().use { cache ->
-                        context.assets.open(fileName).use { inputStream ->
-                            inputStream.copyTo(cache)
-                        }
-                    }
-                }
-            }
+    @Composable
+    fun ErrorScreen(errorMessage: String) {
+        Text(text = "Something went wrong: $errorMessage")
+    }
 }
-
-
-sealed class Screen(val route: String, @StringRes val resourceId: Int, val icon: ImageVector) {
-    object Home : Screen("home", R.string.home, Icons.Filled.Home)
-    object Experience : Screen("experience", R.string.experience, Icons.Filled.List)
-}
-
-

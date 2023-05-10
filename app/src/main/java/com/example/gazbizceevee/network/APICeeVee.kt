@@ -1,16 +1,16 @@
 package com.example.gazbizceevee.network
 
-data class CV(
-    val personal_info: PersonalInfo,
+data class curriculum_vitae(
+    val personal_info: personal_info,
     val introduction: String,
     val development: String,
-    val skills: List<Skill>,
-    val experience: List<Experience>,
-    val education: List<Education>,
-    val references: List<Reference>
+    val skills: List<skills>,
+    val experience: List<experience>,
+    val education: List<education>,
+    val references: List<references>
 )
 
-data class PersonalInfo(
+data class personal_info(
     val name: String,
     val email: String,
     val phone: String,
@@ -19,12 +19,12 @@ data class PersonalInfo(
     val role_title: String
 )
 
-data class Skill(
+data class skills(
     val title: String,
     val skill_list: List<String>
 )
 
-data class Experience(
+data class experience(
     val from: String,
     val to: String,
     val company_name: String,
@@ -35,7 +35,7 @@ data class Experience(
     val bullets: List<String>
 )
 
-data class Education(
+data class education(
     val from: String,
     val to: String,
     val provider: String,
@@ -43,7 +43,7 @@ data class Education(
     val description: String,
 )
 
-data class Reference(
+data class references(
     val name: String,
     val role: String,
     val relationship: String,
